@@ -49,153 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let activeDay = '';
             const mainContainer = document.getElementById('schedule-container');
 
-            function createDayCard(dayKey) {
-                const dayData = scheduleData[dayKey];
-                const card = document.createElement('div');
-                card.id = dayKey;
-                card.className = 'day-card';
-                
-                card.innerHTML = `
-                    <div class="day-card-header">
-                        <div>
-                            <h2 style="color: var(--color-${dayData.color}); text-shadow: 0 0 10px var(--color-${dayData.color})70;">${dayData.title}</h2>
-                            <p>${dayData.subtitle}</p>
-                        </div>
-                        <span class="progress-text">0% Selesai</span>
-                    </div>
-                    <div class="progress-container">
-                         <div class="progress-bar-fill" style="background-color: var(--color-${dayData.color}); box-shadow: 0 0 10px var(--color-${dayData.color})90;"></div>
-                    </div>
-                `;
-                
-                const taskList = document.createElement('ul');
-                taskList.className = 'task-list';
-                dayData.tasks.forEach(task => {
-                    const li = document.createElement('li');
-                    li.className = 'task-item';
-                    li.dataset.time = task.time.replace(/\s/g, '');
-                    const dayColorVar = `var(--color-${dayData.color})`;
-
-                    li.innerHTML = `
-                        <input type="checkbox" class="task-checkbox" style="accent-color: ${dayColorVar};">
-                        <div class="task-details">
-                            <p class="time">${task.time}</p>
-                            <p class="desc">${task.desc}</p>
-                        </div>
-                        ${task.breakdown ? `<button class="breakdown-btn" style="color: ${dayColorVar};">✨ Pecah Tugas</button>` : ''}
-                    `;
-                    taskList.appendChild(li);
-                });
-                
-                card.appendChild(taskList);
-                mainContainer.appendChild(card);
-            }
-            
-            function setActiveDay(day) {
-                activeDay = day;
-                const activeDayColor = `var(--color-${scheduleData[day].color})`;
-
-                document.querySelectorAll('.day-tab').forEach(tab => {
-                    const tabDayColor = `var(--color-${scheduleData[tab.dataset.day].color})`;
-                    tab.classList.toggle('active', tab.dataset.day === day);
-                    if(tab.dataset.day === day) {
-                        tab.style.backgroundColor = activeDayColor;
-                        tab.style.color = 'var(--bg-deep-blue)';
-                        tab.style.boxShadow = `0 2px 10px ${activeDayColor}50`;
-                    } else {
-                        tab.style.backgroundColor = 'transparent';
-                        tab.style.color = 'var(--text-color-muted)';
-                        tab.style.boxShadow = 'none';
-                    }
-                });
-
-                document.querySelectorAll('.day-card').forEach(card => {
-                    card.style.display = card.id === day ? 'block' : 'none';
-                });
-                updateProgressBar(document.getElementById(day));
-                highlightCurrentTask();
-            }
-
-            function highlightCurrentTask() {
-                const now = new Date();
-                const currentDayCard = document.getElementById(activeDay);
-                document.querySelectorAll('.current-task').forEach(el => {
-                    el.classList.remove('current-task');
-                    el.style.borderColor = 'var(--border-color)';
-                    el.style.boxShadow = 'none';
-                });
-
-                if(currentDayCard && currentDayCard.style.display !== 'none') {
-                    const dayColor = `var(--color-${scheduleData[activeDay].color})`;
-                    const currentTime = now.getHours() * 100 + now.getMinutes();
-                    const tasks = currentDayCard.querySelectorAll('.task-item');
-                    
-                    for (const task of tasks) {
-                        const timeParts = task.dataset.time.split('-');
-                        if (timeParts.length === 2) {
-                            try {
-                                const startTime = parseInt(timeParts[0].replace(':', ''), 10);
-                                const endTime = parseInt(timeParts[1].replace(':', ''), 10);
-                                if (!isNaN(startTime) && !isNaN(endTime) && currentTime >= startTime && currentTime < endTime) {
-                                    task.classList.add('current-task');
-                                    task.style.borderColor = dayColor;
-                                    task.style.boxShadow = `0 0 15px ${dayColor}50`;
-                                    task.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    break;
-                                }
-                            } catch(e) { console.error("Could not parse time for task", task.dataset.time); }
-                        }
-                    }
-                }
-            }
-
-            // --- State Management, API Calls, and Other Logic ---
-            function saveState() {
-                const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-                const activeCard = document.getElementById(activeDay);
-                if (activeCard) {
-                    const checkboxes = activeCard.querySelectorAll('.task-checkbox');
-                    state[activeDay] = Array.from(checkboxes).map(cb => cb.checked);
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                }
-            }
-
-            function loadState() {
-                const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-                Object.keys(state).forEach(dayKey => {
-                    const card = document.getElementById(dayKey);
-                    if (card && state[dayKey]) {
-                        const checkboxes = card.querySelectorAll('.task-checkbox');
-                        checkboxes.forEach((cb, index) => {
-                            cb.checked = state[dayKey][index] || false;
-                            updateTaskStyle(cb);
-                        });
-                        updateProgressBar(card);
-                    }
-                });
-            }
-
-            function updateTaskStyle(checkbox) {
-                checkbox.closest('.task-item').classList.toggle('completed', checkbox.checked);
-            }
-
-            function updateProgressBar(card) {
-                if (!card) return;
-                const checkboxes = card.querySelectorAll('.task-checkbox');
-                const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
-                const totalTasks = checkboxes.length;
-                const percentage = totalTasks > 0 ? (checkedCount / totalTasks) * 100 : 0;
-                
-                card.querySelector('.progress-bar-fill').style.width = `${percentage}%`;
-                card.querySelector('.progress-text').textContent = `${Math.round(percentage)}% Selesai`;
-            }
-
-            // Fungsi untuk menampilkan notifikasi
-            function tampilkanNotifikasi(judul, opsi) {
-                if (Notification.permission === "granted") {
-                    new Notification(judul, opsi);
-                }
-            }
+            // -- New: Notifikasi Functionality --
 
             // Fungsi untuk meminta izin notifikasi
             function mintaIzinNotifikasi() {
@@ -209,11 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Jika pengguna memberikan izin
                         if (permission === "granted") {
                             console.log("Izin notifikasi diberikan.");
-                            //  Anda bisa memanggil fungsi untuk mengatur notifikasi terjadwal di sini
+                            // Anda bisa memanggil fungsi untuk mengatur notifikasi terjadwal di sini
                         } else {
                             console.log("Izin notifikasi ditolak.");
                         }
                     });
+                }
+            }
+
+            // Fungsi untuk menampilkan notifikasi
+            function tampilkanNotifikasi(judul, opsi) {
+                if (Notification.permission === "granted") {
+                    new Notification(judul, opsi);
                 }
             }
 
@@ -241,9 +102,162 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Inisialisasi saat halaman dimuat
             document.addEventListener("DOMContentLoaded", () => {
-                tampilkanDaftarBarang();
-                updateTanggalWaktu();
-                setInterval(updateTanggalWaktu, 1000);
-                mintaIzinNotifikasi();
-                setInterval(cekJadwalNotifikasi, 60000); // Periksa setiap 60 detik (1 menit)
+                // --  Load and Set Up Day Cards  --
+                function createDayCard(dayKey) {
+                    const dayData = scheduleData[dayKey];
+                    const card = document.createElement('div');
+                    card.id = dayKey;
+                    card.className = 'day-card';
+                    
+                    card.innerHTML = `
+                        <div class="day-card-header">
+                            <div>
+                                <h2 style="color: var(--color-${dayData.color}); text-shadow: 0 0 10px var(--color-${dayData.color})70;">${dayData.title}</h2>
+                                <p>${dayData.subtitle}</p>
+                            </div>
+                            <span class="progress-text">0% Selesai</span>
+                        </div>
+                        <div class="progress-container">
+                             <div class="progress-bar-fill" style="background-color: var(--color-${dayData.color}); box-shadow: 0 0 10px var(--color-${dayData.color})90;"></div>
+                        </div>
+                    `;
+                    
+                    const taskList = document.createElement('ul');
+                    taskList.className = 'task-list';
+                    dayData.tasks.forEach(task => {
+                        const li = document.createElement('li');
+                        li.className = 'task-item';
+                        li.dataset.time = task.time.replace(/\s/g, '');
+                        const dayColorVar = `var(--color-${dayData.color})`;
+
+                        li.innerHTML = `
+                            <input type="checkbox" class="task-checkbox" style="accent-color: ${dayColorVar};">
+                            <div class="task-details">
+                                <p class="time">${task.time}</p>
+                                <p class="desc">${task.desc}</p>
+                            </div>
+                            ${task.breakdown ? `<button class="breakdown-btn" style="color: ${dayColorVar};">✨ Pecah Tugas</button>` : ''}
+                        `;
+                        taskList.appendChild(li);
+                    });
+                    
+                    card.appendChild(taskList);
+                    mainContainer.appendChild(card);
+                }
+                
+                function setActiveDay(day) {
+                    activeDay = day;
+                    const activeDayColor = `var(--color-${scheduleData[day].color})`;
+
+                    document.querySelectorAll('.day-tab').forEach(tab => {
+                        const tabDayColor = `var(--color-${scheduleData[tab.dataset.day].color})`;
+                        tab.classList.toggle('active', tab.dataset.day === day);
+                        if(tab.dataset.day === day) {
+                            tab.style.backgroundColor = activeDayColor;
+                            tab.style.color = 'var(--bg-deep-blue)';
+                            tab.style.boxShadow = `0 2px 10px ${activeDayColor}50`;
+                        } else {
+                            tab.style.backgroundColor = 'transparent';
+                            tab.style.color = 'var(--text-color-muted)';
+                            tab.style.boxShadow = 'none';
+                        }
+                    });
+
+                    document.querySelectorAll('.day-card').forEach(card => {
+                        card.style.display = card.id === day ? 'block' : 'none';
+                    });
+                    updateProgressBar(document.getElementById(day));
+                    highlightCurrentTask();
+                }
+
+                function highlightCurrentTask() {
+                    const now = new Date();
+                    const currentDayCard = document.getElementById(activeDay);
+                    document.querySelectorAll('.current-task').forEach(el => {
+                        el.classList.remove('current-task');
+                        el.style.borderColor = 'var(--border-color)';
+                        el.style.boxShadow = 'none';
+                    });
+
+                    if(currentDayCard && currentDayCard.style.display !== 'none') {
+                        const dayColor = `var(--color-${scheduleData[activeDay].color})`;
+                        const currentTime = now.getHours() * 100 + now.getMinutes();
+                        const tasks = currentDayCard.querySelectorAll('.task-item');
+                        
+                        for (const task of tasks) {
+                            const timeParts = task.dataset.time.split('-');
+                            if (timeParts.length === 2) {
+                                try {
+                                    const startTime = parseInt(timeParts[0].replace(':', ''), 10);
+                                    const endTime = parseInt(timeParts[1].replace(':', ''), 10);
+                                    if (!isNaN(startTime) && !isNaN(endTime) && currentTime >= startTime && currentTime < endTime) {
+                                        task.classList.add('current-task');
+                                        task.style.borderColor = dayColor;
+                                        task.style.boxShadow = `0 0 15px ${dayColor}50`;
+                                        task.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        break;
+                                    }
+                                } catch(e) { console.error("Could not parse time for task", task.dataset.time); }
+                            }
+                        }
+                    }
+                }
+
+                // --- State Management, API Calls, and Other Logic ---
+                function saveState() {
+                    const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+                    const activeCard = document.getElementById(activeDay);
+                    if (activeCard) {
+                        const checkboxes = activeCard.querySelectorAll('.task-checkbox');
+                        state[activeDay] = Array.from(checkboxes).map(cb => cb.checked);
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                    }
+                }
+
+                function loadState() {
+                    const state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+                    Object.keys(state).forEach(dayKey => {
+                        const card = document.getElementById(dayKey);
+                        if (card && state[dayKey]) {
+                            const checkboxes = card.querySelectorAll('.task-checkbox');
+                            checkboxes.forEach((cb, index) => {
+                                cb.checked = state[dayKey][index] || false;
+                                updateTaskStyle(cb);
+                            });
+                            updateProgressBar(card);
+                        }
+                    }
+                });
+                }
+
+                function updateTaskStyle(checkbox) {
+                    checkbox.closest('.task-item').classList.toggle('completed', checkbox.checked);
+                }
+
+                function updateProgressBar(card) {
+                    if (!card) return;
+                    const checkboxes = card.querySelectorAll('.task-checkbox');
+                    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                    const totalTasks = checkboxes.length;
+                    const percentage = totalTasks > 0 ? (checkedCount / totalTasks) * 100 : 0;
+                    
+                    card.querySelector('.progress-bar-fill').style.width = `${percentage}%`;
+                    card.querySelector('.progress-text').textContent = `${Math.round(percentage)}% Selesai`;
+                }
+
+                // --- Function to initialize and start the app ---
+                function initializeApp() {
+                    Object.keys(scheduleData).forEach(createDayCard);
+                    const today = new Date().getDay();
+                    const dayMap = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+                    setActiveDay(dayMap[today]);
+                    document.getElementById('currentDate').textContent = new Date().toLocaleString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    loadState();
+                    setupEventListeners();
+                    // -- Start the notification check interval after initialization --
+                    mintaIzinNotifikasi(); // Get notification permission
+                    setInterval(cekJadwalNotifikasi, 60000); // Periksa setiap 60 detik (1 menit)
+                }
+
+                initializeApp(); // Panggil fungsi inisialisasi
             });
