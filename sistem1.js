@@ -53,23 +53,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Fungsi untuk meminta izin notifikasi
             function mintaIzinNotifikasi() {
-                if (!("Notification" in window)) {
-                    alert("Browser Anda tidak mendukung notifikasi.");
-                    return;
-                }
+    if (!("Notification" in window)) {
+        alert("Browser Anda tidak mendukung notifikasi.");
+        return;
+    }
 
-                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                    Notification.requestPermission().then(function(permission) {
-                        // Jika pengguna memberikan izin
-                        if (permission === "granted") {
-                            console.log("Izin notifikasi diberikan.");
-                            // Anda bisa memanggil fungsi untuk mengatur notifikasi terjadwal di sini
-                        } else {
-                            console.log("Izin notifikasi ditolak.");
-                        }
-                    });
-                }
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(function(permission) {
+            // Jika pengguna memberikan izin
+            if (permission === "granted") {
+                console.log("Izin notifikasi diberikan.");
+                // Anda bisa memanggil fungsi untuk mengatur notifikasi terjadwal di sini
+            } else {
+                console.log("Izin notifikasi ditolak.  Cek apakah Anda mengizinkan notifikasi di browser.");
             }
+             console.log("Notification.permission:", Notification.permission); // Tambahkan ini
+        });
+    } else {
+       console.log("Notification.permission sudah:", Notification.permission); // Tambahkan ini
+    }
+}
 
             // Fungsi untuk menampilkan notifikasi
             function tampilkanNotifikasi(judul, opsi) {
@@ -80,25 +83,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Fungsi untuk memeriksa waktu dan menampilkan notifikasi jika perlu
             function cekJadwalNotifikasi() {
-                const now = new Date();
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                const currentDay = new Date().getDay(); // 0 (Minggu) hingga 6 (Sabtu)
-                const dayMap = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
-                const currentDayKey = dayMap[currentDay];
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentDay = new Date().getDay(); // 0 (Minggu) hingga 6 (Sabtu)
+    const dayMap = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
+    const currentDayKey = dayMap[currentDay];
 
-                if (scheduleData[currentDayKey]) {
-                    scheduleData[currentDayKey].tasks.forEach(task => {
-                        const [hour, minute] = task.time.split('-')[0].split(':').map(Number); // Ambil waktu mulai saja
-                        if (currentHour === hour && currentMinute === minute) {
-                            tampilkanNotifikasi("Pengingat Jadwal", {
-                                body: task.desc,
-                                icon: "path/to/your/icon.png" // Ganti dengan path ikon Anda
-                            });
-                        }
-                    });
-                }
+    console.log("Current Day Key:", currentDayKey); // Debugging: Lihat nilai currentDayKey
+
+    if (scheduleData[currentDayKey]) {
+        console.log("Schedule Data for this day:", scheduleData[currentDayKey]); // Debugging: Lihat data jadwal untuk hari ini
+        scheduleData[currentDayKey].tasks.forEach(task => {
+            const [hour, minute] = task.time.split('-')[0].split(':').map(Number); // Ambil waktu mulai saja
+            if (currentHour === hour && currentMinute === minute) {
+                tampilkanNotifikasi("Pengingat Jadwal", {
+                    body: task.desc,
+                    icon: "path/to/your/icon.png" // Ganti dengan path ikon Anda
+                });
             }
+        });
+    } else {
+        console.log("Tidak ada jadwal untuk hari ini:", currentDayKey); // Debugging jika tidak ada jadwal
+    }
+}
 
             // Inisialisasi saat halaman dimuat
             document.addEventListener("DOMContentLoaded", () => {
