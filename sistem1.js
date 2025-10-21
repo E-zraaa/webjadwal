@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-            // --- Application Data ---
-            const scheduleData = {
-                 senin: {
-                    title: "Senin",
-                    subtitle: "Hari Fokus Belajar Mandiri",
-                    color: "senin",
-                    tasks: [ { time: '05:00 - 05:10', desc: 'Bangun tidur dan stretching ringan.' }, { time: '05:10 - 05:30', desc: 'Membersihkan kamar (merapikan tempat tidur, dll).', breakdown: true }, { time: '05:30 - 06:00', desc: 'Meditasi atau latihan pernapasan (mindfulness).' }, { time: '06:00 - 06:30', desc: 'Olahraga ringan (lari pagi, yoga, atau stretching).' }, { time: '06:30 - 07:00', desc: 'Mandi dan persiapan pagi.' }, { time: '07:00 - 07:30', desc: 'Sarapan sehat.' }, { time: '07:30 - 09:30', desc: 'Belajar mandiri (review materi atau belajar topik baru).', breakdown: true }, { time: '09:30 - 09:45', desc: 'Istirahat sejenak (berjalan kaki, minum air).' }, { time: '09:45 - 11:45', desc: 'Membaca buku (pengembangan diri atau bidang yang diminati).', breakdown: true }, { time: '11:45 - 12:30', desc: 'Makan siang.' }, { time: '12:30 - 13:00', desc: 'Waktu untuk merapikan lingkungan kerja atau rumah.' }, { time: '13:00 - 15:00', desc: 'Kerjakan tugas kuliah atau proyek pribadi.', breakdown: true }, { time: '15:00 - 15:30', desc: 'Istirahat (snack atau teh/herbal drink).' }, { time: '15:30 - 17:00', desc: 'Fokus pada keterampilan tambahan (kursus online).', breakdown: true }, { time: '17:00 - 17:30', desc: 'Refleksi harian (tulis jurnal atau evaluasi progres).' }, { time: '17:30 - 18:00', desc: 'Waktu untuk keluarga atau teman.' }, { time: '18:00 - 19:00', desc: 'Makan malam.' }, { time: '19:00 - 19:30', desc: 'Santai (nonton film pendek atau mendengarkan podcast).' }, { time: '19:30 - 20:00', desc: 'Review dan persiapkan rencana untuk hari berikutnya.' }, { time: '20:00 - 21:00', desc: 'Aktivitas ringan & persiapan tidur.' }, { time: '21:00 - 21:30', desc: 'Tidur.' } ]
+    // --- Application Data ---
+    const scheduleData = {
+         senin: {
+            title: "Senin",
+            subtitle: "Hari Fokus Belajar Mandiri",
+            color: "senin",
+            tasks: [ { time: '05:00 - 05:10', desc: 'Bangun tidur dan stretching ringan.' }, { time: '05:10 - 05:30', desc: 'Membersihkan kamar (merapikan tempat tidur, dll).', breakdown: true }, { time: '05:30 - 06:00', desc: 'Meditasi atau latihan pernapasan (mindfulness).' }, { time: '06:00 - 06:30', desc: 'Olahraga ringan (lari pagi, yoga, atau stretching).' }, { time: '06:30 - 07:00', desc: 'Mandi dan persiapan pagi.' }, { time: '07:00 - 07:30', desc: 'Sarapan sehat.' }, { time: '07:30 - 09:30', desc: 'Belajar mandiri (review materi atau belajar topik baru).', breakdown: true }, { time: '09:30 - 09:45', desc: 'Istirahat sejenak (berjalan kaki, minum air).' }, { time: '09:45 - 11:45', desc: 'Membaca buku (pengembangan diri atau bidang yang diminati).', breakdown: true }, { time: '11:45 - 12:30', desc: 'Makan siang.' }, { time: '12:30 - 13:00', desc: 'Waktu untuk merapikan lingkungan kerja atau rumah.' }, { time: '13:00 - 15:00', desc: 'Kerjakan tugas kuliah atau proyek pribadi.', breakdown: true }, { time: '15:00 - 15:30', desc: 'Istirahat (snack atau teh/herbal drink).' }, { time: '15:30 - 17:00', desc: 'Fokus pada keterampilan tambahan (kursus online).', breakdown: true }, { time: '17:00 - 17:30', desc: 'Refleksi harian (tulis jurnal atau evaluasi progres).' }, { time: '17:30 - 18:00', desc: 'Waktu untuk keluarga atau teman.' }, { time: '18:00 - 19:00', desc: 'Makan malam.' }, { time: '19:00 - 19:30', desc: 'Santai (nonton film pendek atau mendengarkan podcast).' }, { time: '19:30 - 20:00', desc: 'Review dan persiapkan rencana untuk hari berikutnya.' }, { time: '20:00 - 21:00', desc: 'Aktivitas ringan & persiapan tidur.' }, { time: '21:00 - 21:30', desc: 'Tidur.' } ]
                 },
                 selasa: {
                     title: "Selasa",
@@ -190,104 +190,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.querySelector('.progress-text').textContent = `${Math.round(percentage)}% Selesai`;
             }
 
-            const apiKey = "AIzaSyC9s9j7YjDUVmR4YHGWaVbJfDeVsaZd03A";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            const modal = {
-                overlay: document.getElementById('appModal'),
-                title: document.getElementById('modalTitle'),
-                content: document.getElementById('modalContent'),
-                actions: document.getElementById('modalActions'),
-                closeBtn: document.getElementById('modalCloseButton'),
-                open() { this.overlay.style.display = 'flex'; },
-                close() { this.overlay.style.display = 'none'; }
-            };
-            modal.closeBtn.addEventListener('click', () => modal.close());
-            modal.overlay.addEventListener('click', (e) => { if (e.target === modal.overlay) modal.close(); });
-
-            async function callGemini(prompt) {
-                 let retries = 3;
-                let delay = 1000;
-                while(retries > 0) {
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                        });
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        const result = await response.json();
-                        return result.candidates[0].content.parts[0].text;
-                    } catch (error) {
-                        console.error("Gemini API call failed:", error);
-                        retries--;
-                        if (retries === 0) return "Terjadi kesalahan saat menghubungi AI. Silakan coba lagi nanti.";
-                        await new Promise(res => setTimeout(res, delay));
-                        delay *= 2;
-                    }
+            // Fungsi untuk menampilkan notifikasi
+            function tampilkanNotifikasi(judul, opsi) {
+                if (Notification.permission === "granted") {
+                    new Notification(judul, opsi);
                 }
             }
 
-            async function handleBreakdown(taskDesc) {
-                modal.title.textContent = '✨ Memecah Tugas...';
-                modal.content.innerHTML = '<div class="loader"></div><p style="text-align: center;">AI sedang menyusun langkah-langkah untuk Anda...</p>';
-                modal.actions.innerHTML = '';
-                modal.open();
-                
-                const prompt = `Pecah tugas berikut menjadi 3-4 langkah kecil yang spesifik dan dapat ditindaklanjuti untuk seorang mahasiswa. Beri jawaban dalam format daftar bernomor. Tugas: "${taskDesc}"`;
-                const result = await callGemini(prompt);
-                
-                modal.title.textContent = '✨ Langkah-Langkah Tugas';
-                const dayColor = `var(--color-${scheduleData[activeDay].color})`;
-                const formattedResult = result.split('\n').filter(line => line.trim()).map(line => `<li style="border-left-color: ${dayColor};">${line.replace(/^\d+\.\s*/, '')}</li>`).join('');
-                modal.content.innerHTML = `<p>Berikut adalah langkah-langkah yang bisa Anda ambil untuk menyelesaikan tugas:</p><ul>${formattedResult}</ul>`;
-                
-                const closeBtn = document.createElement('button');
-                closeBtn.textContent = 'Tutup';
-                closeBtn.className = 'button button-primary';
-                closeBtn.onclick = () => modal.close();
-                modal.actions.appendChild(closeBtn);
-            }
-            
-            function setupEventListeners() {
-                document.querySelectorAll('.day-tab').forEach(tab => { tab.addEventListener('click', () => setActiveDay(tab.dataset.day)); });
-                mainContainer.addEventListener('change', (e) => { if (e.target.classList.contains('task-checkbox')) { updateTaskStyle(e.target); updateProgressBar(e.target.closest('.day-card')); saveState(); } });
-                mainContainer.addEventListener('click', (e) => { if (e.target.classList.contains('breakdown-btn')) { const taskDesc = e.target.closest('.task-item').querySelector('.desc').textContent; handleBreakdown(taskDesc); } });
-                document.getElementById('resetButton').addEventListener('click', () => {
-                    modal.title.textContent = 'Konfirmasi Reset';
-                    modal.content.innerHTML = `<p>Apakah Anda yakin ingin mereset progress untuk hari <strong>${scheduleData[activeDay].title}</strong>? Aksi ini tidak bisa dibatalkan.</p>`;
-                    modal.actions.innerHTML = '';
-                    const confirmBtn = document.createElement('button');
-                    confirmBtn.textContent = 'Ya, Reset';
-                    confirmBtn.className = 'button';
-                    confirmBtn.style.backgroundColor = 'var(--color-kamis)';
-                    confirmBtn.style.color = 'white';
-                    confirmBtn.onclick = () => {
-                        const activeCard = document.getElementById(activeDay);
-                        activeCard.querySelectorAll('.task-checkbox').forEach(cb => { cb.checked = false; updateTaskStyle(cb); });
-                        updateProgressBar(activeCard);
-                        saveState();
-                        modal.close();
-                    };
-                    const cancelBtn = document.createElement('button');
-                    cancelBtn.textContent = 'Batal';
-                    cancelBtn.className = 'button button-secondary';
-                    cancelBtn.onclick = () => modal.close();
-                    modal.actions.appendChild(cancelBtn);
-                    modal.actions.appendChild(confirmBtn);
-                    modal.open();
-                });
+            // Fungsi untuk meminta izin notifikasi
+            function mintaIzinNotifikasi() {
+                if (!("Notification" in window)) {
+                    alert("Browser Anda tidak mendukung notifikasi.");
+                    return;
+                }
+
+                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission().then(function(permission) {
+                        // Jika pengguna memberikan izin
+                        if (permission === "granted") {
+                            console.log("Izin notifikasi diberikan.");
+                            //  Anda bisa memanggil fungsi untuk mengatur notifikasi terjadwal di sini
+                        } else {
+                            console.log("Izin notifikasi ditolak.");
+                        }
+                    });
+                }
             }
 
-            function initializeApp() {
-                Object.keys(scheduleData).forEach(createDayCard);
-                const today = new Date().getDay();
+            // Fungsi untuk memeriksa waktu dan menampilkan notifikasi jika perlu
+            function cekJadwalNotifikasi() {
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                const currentDay = new Date().getDay(); // 0 (Minggu) hingga 6 (Sabtu)
                 const dayMap = ['minggu', 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
-                setActiveDay(dayMap[today]);
-                document.getElementById('currentDate').textContent = new Date().toLocaleString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                loadState();
-                setupEventListeners();
-                setInterval(highlightCurrentTask, 60000);
+                const currentDayKey = dayMap[currentDay];
+
+                if (scheduleData[currentDayKey]) {
+                    scheduleData[currentDayKey].tasks.forEach(task => {
+                        const [hour, minute] = task.time.split('-')[0].split(':').map(Number); // Ambil waktu mulai saja
+                        if (currentHour === hour && currentMinute === minute) {
+                            tampilkanNotifikasi("Pengingat Jadwal", {
+                                body: task.desc,
+                                icon: "path/to/your/icon.png" // Ganti dengan path ikon Anda
+                            });
+                        }
+                    });
+                }
             }
 
-            initializeApp();
-        });
+            // Inisialisasi saat halaman dimuat
+            document.addEventListener("DOMContentLoaded", () => {
+                tampilkanDaftarBarang();
+                updateTanggalWaktu();
+                setInterval(updateTanggalWaktu, 1000);
+                mintaIzinNotifikasi();
+                setInterval(cekJadwalNotifikasi, 60000); // Periksa setiap 60 detik (1 menit)
+            });
